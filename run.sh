@@ -1,3 +1,3 @@
 #!/bin/sh
 
-erl -pa ebin deps/**/ebin -s bugsnag_app
+erl -pa ebin deps/**/ebin -s bugsnag
