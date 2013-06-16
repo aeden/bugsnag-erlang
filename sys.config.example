@@ -1,0 +1,6 @@
+[
+  {bugsnag, [
+    {error_logger, true},
+    {api_key, "ENTER_API_KEY"}
+  ]}
+].
