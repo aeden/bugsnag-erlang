@@ -48,7 +48,7 @@ handle_call(_, _, State) ->
   {reply, ok, State}.
 
 handle_cast({exception, Type, Reason, Message, Module, Line, Trace, Request}, State) ->
-  catch send_exception(Type, Reason, Message, Module, Line, Trace, Request, State),
+  send_exception(Type, Reason, Message, Module, Line, Trace, Request, State),
   {noreply, State};
 
 handle_cast({test_error}, State) ->
@@ -65,19 +65,8 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 % Internal API
-send_exception(_Type, Reason, Message, _Module, Line, Trace, _Request, State) ->
+send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) ->
   {ok, Hostname} = inet:gethostname(),
-
-  {FileName, FunctionName} = case Trace of
-    undefined -> {"", ""};
-    [] -> {"", ""};
-    [{_, F, _, [{file, File}, {line, _}]}] -> {File, io_lib:format("~p", [F])};
-    [{_, F, _, [{file, File}, {line, _}]}|_] -> {File, io_lib:format("~p", [F])}
-  end,
-
-  %lager:info("Trace: ~p", [Trace]),
-  %lager:info("Request: ~p", [Request]),
-
   Payload = [
     {apiKey, list_to_binary(State#state.api_key)},
     {notifier, [
@@ -93,14 +82,7 @@ send_exception(_Type, Reason, Message, _Module, Line, Trace, _Request, State) ->
               [
                 {errorClass, list_to_binary(io_lib:format("~p", [Reason]))},
                 {message, list_to_binary(io_lib:format("~p", [Message]))},
-                {stacktrace, [
-                    [
-                      {file, list_to_binary(FileName)},
-                      {lineNumber, Line},
-                      {method, list_to_binary(FunctionName)}
-                    ]
-                  ]
-                }
+                {stacktrace, process_trace(Trace)}
               ]
             ]}
         ]
@@ -109,11 +91,27 @@ send_exception(_Type, Reason, Message, _Module, Line, Trace, _Request, State) ->
   deliver_payload(jsx:encode(Payload)).
 
 
+process_trace(undefined) -> [];
+process_trace(Trace) ->
+  lager:info("Processing trace ~p", [Trace]),
+  process_trace(Trace, []).
+
+process_trace([], ProcessedTrace) -> ProcessedTrace;
+process_trace([Current|Rest], ProcessedTrace) ->
+  {_, F, _, [{file, File}, {line, Line}]} = Current,
+  StackTraceLine = [
+    {file, list_to_binary(File)},
+    {lineNumber, Line},
+    {method, list_to_binary(io_lib:format("~p", [F]))}
+  ],
+  process_trace(Rest, ProcessedTrace ++ [StackTraceLine]).
+
+
 deliver_payload(Payload) ->
-  lager:debug("Sending exception: ~p", [Payload]),
+  lager:info("Sending exception: ~p", [Payload]),
   case httpc:request(post, {?NOTIFY_ENDPOINT, [], "application/json", Payload}, [{timeout, 5000}], []) of
     {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} ->
-      lager:debug("Error sent. Response: ~p", [Body]);
+      lager:info("Error sent. Response: ~p", [Body]);
     {_, {{_Version, Status, ReasonPhrase}, _Headers, _Body}} ->
       lager:error("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase])
   end,
