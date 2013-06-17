@@ -1,7 +1,7 @@
 -module(bugsnag).
 -behavior(gen_server).
 
--export([start/0, start_link/1]).
+-export([start/0, start_link/2, notify/5, notify/7, test_error/0]).
 
 % Gen server hooks
 -export([
@@ -13,7 +13,13 @@
     code_change/3
   ]).
 
--record(state, {api_key}).
+-record(state, {api_key, release_stage}).
+
+-define(NOTIFY_ENDPOINT, "https://notify.bugsnag.com").
+
+-define(NOTIFIER_NAME, <<"Bugsnag Erlang">>).
+-define(NOTIFIER_VERSION, <<"1.0.0">>).
+-define(NOTIFIER_URL, <<"https://github.com/aeden/bugsnag-erlang">>).
 
 % Public API
 start() ->
@@ -23,19 +29,30 @@ start() ->
   lager:start(),
   application:start(bugsnag).
 
-start_link(ApiKey) ->
-  %lager:info("Starting bugsnag gen server with API key ~p", [ApiKey]),
-  gen_server:start_link({local, ?MODULE}, ?MODULE, [ApiKey], []).
+start_link(ApiKey, ReleaseStage) ->
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [ApiKey, ReleaseStage], []).
+
+notify(Type, Reason, Message, Module, Line) ->
+  notify(Type, Reason, Message, Module, Line, undefined, undefined).
+notify(Type, Reason, Message, Module, Line, Trace, Request) ->
+  gen_server:cast(?MODULE, {exception, Type, Reason, Message, Module, Line, Trace, Request}).
+
+test_error() ->
+  gen_server:cast(?MODULE, {test_error}).
 
 % Gen server hooks
-init([ApiKey]) ->
-  {ok, #state{api_key = ApiKey}}.
+init([ApiKey, ReleaseStage]) ->
+  {ok, #state{api_key = ApiKey, release_stage = ReleaseStage}}.
 
 handle_call(_, _, State) ->
   {reply, ok, State}.
 
-handle_cast({exception, Data = [{type, _Type}, {reason, _Reason}, {message, _Message}, {module, _Module}, {line, _Line}, {trace, _Trace}]}, State) ->
-  send_exception(Data),
+handle_cast({exception, Type, Reason, Message, Module, Line, Trace, Request}, State) ->
+  catch send_exception(Type, Reason, Message, Module, Line, Trace, Request, State),
+  {noreply, State};
+
+handle_cast({test_error}, State) ->
+  erlang:error(test_error),
   {noreply, State}.
 
 handle_info(_Message, State) ->
@@ -48,6 +65,57 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 % Internal API
-send_exception(Data) ->
-  %lager:info("Sending exception: ~p", [Data]),
+send_exception(_Type, Reason, Message, _Module, Line, Trace, _Request, State) ->
+  {ok, Hostname} = inet:gethostname(),
+
+  {FileName, FunctionName} = case Trace of
+    undefined -> {"", ""};
+    [] -> {"", ""};
+    [{_, F, _, [{file, File}, {line, _}]}] -> {File, io_lib:format("~p", [F])};
+    [{_, F, _, [{file, File}, {line, _}]}|_] -> {File, io_lib:format("~p", [F])}
+  end,
+
+  %lager:info("Trace: ~p", [Trace]),
+  %lager:info("Request: ~p", [Request]),
+
+  Payload = [
+    {apiKey, list_to_binary(State#state.api_key)},
+    {notifier, [
+        {name, ?NOTIFIER_NAME},
+        {version, ?NOTIFIER_VERSION},
+        {url, ?NOTIFIER_URL}
+      ]},
+    {events, [
+        [
+          {context, list_to_binary(Hostname)},
+          {releaseStage, list_to_binary(State#state.release_stage)},
+          {exceptions, [
+              [
+                {errorClass, list_to_binary(io_lib:format("~p", [Reason]))},
+                {message, list_to_binary(io_lib:format("~p", [Message]))},
+                {stacktrace, [
+                    [
+                      {file, list_to_binary(FileName)},
+                      {lineNumber, Line},
+                      {method, list_to_binary(FunctionName)}
+                    ]
+                  ]
+                }
+              ]
+            ]}
+        ]
+      ]}
+  ],
+  deliver_payload(jsx:encode(Payload)).
+
+
+deliver_payload(Payload) ->
+  lager:debug("Sending exception: ~p", [Payload]),
+  case httpc:request(post, {?NOTIFY_ENDPOINT, [], "application/json", Payload}, [{timeout, 5000}], []) of
+    {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} ->
+      lager:debug("Error sent. Response: ~p", [Body]);
+    {_, {{_Version, Status, ReasonPhrase}, _Headers, _Body}} ->
+      lager:error("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase])
+  end,
+
   ok.
