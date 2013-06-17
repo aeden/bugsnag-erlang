@@ -2,3 +2,4 @@ deps
 *.dump
 ebin
 log
+sys.config
