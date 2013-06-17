@@ -1,6 +1,6 @@
 Bugsnag notifier for Erlang applications.
 
-h2. Dependencies
+## Dependencies
 
 Requires Lager.
 
@@ -8,7 +8,7 @@ The following applications must be started:
 
     lager, inets, crypto, ssl
 
-h2. Usage
+## Usage
 
 You may send custom errors directly:
 
@@ -48,6 +48,6 @@ application:start(bugsnag)
 
 Or add the application to your .app configuration.
 
-h2. Thanks
+## Thanks
 
 Thank you to Ken Pratt: his library https://github.com/kenpratt/erlbrake provided a lot of code for this library.
