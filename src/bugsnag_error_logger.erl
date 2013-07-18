@@ -153,7 +153,7 @@ parse_reason(_Reason) ->
 format_args([], FmtAcc, ArgsAcc) ->
   {string:join(lists:reverse(FmtAcc), ", "), lists:reverse(ArgsAcc)};
 format_args([H|T], FmtAcc, ArgsAcc) ->
-  format_args(T, ["~s"|FmtAcc], [H|ArgsAcc]).
+  format_args(T, ["~p"|FmtAcc], [H|ArgsAcc]).
 
 format_limit([{M, F, _}|_] = Trace) ->
   case {M, F} of
