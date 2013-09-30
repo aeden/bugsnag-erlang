@@ -85,13 +85,18 @@ handle_error_report(_, _, supervisor_report, Report, S) ->
       {offender, Offender},
       {reason, Reason},
       {supervisor, Name}] ->
-      notify(supervisor_report, Reason,
-        "Supervisor ~w had child ~s exit with reason ~s in context ~w",
-        [element(2, Name),
-          format_offender(Offender),
-          format_reason(Reason),
-          Context],
-        [{"full_reason", format_term(Reason)}]);
+      case Reason of
+        normal ->
+          ok; % Nothing happens on a normal exit
+        _ ->
+          notify(supervisor_report, Reason,
+            "Supervisor ~w had child ~s exit with reason ~s in context ~w",
+            [element(2, Name),
+              format_offender(Offender),
+              format_reason(Reason),
+              Context],
+            [{"full_reason", format_term(Reason)}])
+      end;
     _ ->
       %% notify(Type, Reason, Format, Args, Extra),
       ok
