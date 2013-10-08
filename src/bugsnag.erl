@@ -98,12 +98,21 @@ process_trace(Trace) ->
 
 process_trace([], ProcessedTrace) -> ProcessedTrace;
 process_trace([Current|Rest], ProcessedTrace) ->
-  {_, F, _, [{file, File}, {line, Line}]} = Current,
-  StackTraceLine = [
-    {file, list_to_binary(File)},
-    {lineNumber, Line},
-    {method, list_to_binary(io_lib:format("~p", [F]))}
-  ],
+  StackTraceLine = case Current of
+    {_, F, _, [{file, File}, {line, Line}]} ->
+      [
+        {file, list_to_binary(File)},
+        {lineNumber, Line},
+        {method, list_to_binary(io_lib:format("~p", [F]))}
+      ];
+    {_, F, _} ->
+      [
+        {method, list_to_binary(io_lib:format("~p", [F]))}
+      ];
+    _ ->
+      lager:error("Discarding stack trace line: ~p", [Current]),
+      []
+  end,
   process_trace(Rest, ProcessedTrace ++ [StackTraceLine]).
 
 

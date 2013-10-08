@@ -5,7 +5,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _Args) ->
-  lager:debug("Starting bugsnag notifier"),
+  lager:info("Starting bugsnag notifier"),
   ReleaseState = case application:get_env(bugsnag, release_state) of
     {ok, Value} -> Value;
     undefined -> undefined
@@ -23,5 +23,5 @@ start(_Type, _Args) ->
   end.
 
 stop(_State) ->
-  lager:debug("Stopping bugsnag notifier"),
+  lager:info("Stopping bugsnag notifier"),
   ok.
