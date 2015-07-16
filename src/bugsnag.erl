@@ -56,7 +56,7 @@ handle_cast({test_error}, State) ->
   {noreply, State}.
 
 handle_info(_Message, State) ->
-  {reply, ok, State}.
+  {noreply, State}.
 
 terminate(_Reason, _State) ->
   ok.
