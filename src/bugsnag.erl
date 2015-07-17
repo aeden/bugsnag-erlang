@@ -76,6 +76,7 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
       ]},
     {events, [
         [
+          {payloadVersion, "2"},
           {context, list_to_binary(Hostname)},
           {releaseStage, list_to_binary(State#state.release_stage)},
           {exceptions, [
