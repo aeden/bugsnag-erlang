@@ -48,6 +48,17 @@ application:start(bugsnag)
 
 Or add the application to your .app configuration.
 
+### Lager handler
+
+We also provide a [lager](https://github.com/basho/lager) to report anything
+above a certain level (by default, `error`) to Bugsnag.
+
+For example, simply add
+```
+{bugsnag_lager_handler, critical}
+```
+to your lager handler config.
+
 ## Thanks
 
 Thank you to Ken Pratt: his library https://github.com/kenpratt/erlbrake provided a lot of code for this library.
