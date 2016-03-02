@@ -2,7 +2,7 @@
 -behavior(supervisor).
 
 % API
--export([start_link/2]).
+-export([start_link/1]).
 
 % Supervisor hooks
 -export([init/1]).
@@ -13,13 +13,14 @@
 -define(CHILD(I, Type, Args), {I, {I, start_link, Args}, permanent, 5000, Type, [I]}).
 
 %% Public API
-start_link(ApiKey, ReleaseState) ->
-  %lager:debug("Starting ~p", [?MODULE]),
-  supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, [ApiKey, ReleaseState]).
+start_link(Args) ->
+  supervisor:start_link({local, ?SUPERVISOR}, ?MODULE, Args).
 
-init([ApiKey, ReleaseState]) ->
-  Procs = [
-    ?CHILD(bugsnag, worker, [ApiKey, ReleaseState])
-  ],
+init(Args) ->
+  {ok, {{one_for_one, 20, 10}, procs(Args)}}.
 
-  {ok, {{one_for_one, 20, 10}, Procs}}.
+procs(disabled) ->
+    %% bugsnag is disabled in the config
+    [];
+procs({ApiKey, ReleaseState}) ->
+    [?CHILD(bugsnag, worker, [ApiKey, ReleaseState])].
