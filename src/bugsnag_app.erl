@@ -5,6 +5,17 @@
 -export([start/2, stop/1]).
 
 start(_Type, _Args) ->
+  case application:get_env(bugsnag, enabled, true) of
+    true ->
+      start();
+    false ->
+      lager:info("Bugsnag notifier disabled"),
+      %% we still need to start the sup to comply with the application
+      %% behaviour
+      bugsnag_sup:start_link(disabled)
+  end.
+
+start() ->
   lager:info("Starting bugsnag notifier"),
   ReleaseState = case application:get_env(bugsnag, release_state) of
     {ok, Value} -> Value;
@@ -18,7 +29,7 @@ start(_Type, _Args) ->
           error_logger:add_report_handler(bugsnag_error_logger);
         _ -> ok
       end,
-      bugsnag_sup:start_link(ApiKey, ReleaseState);
+      bugsnag_sup:start_link({ApiKey, ReleaseState});
     undefined -> {error, no_api_key}
   end.
 
