@@ -33,7 +33,7 @@ start_link(ApiKey, ReleaseStage) ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [ApiKey, ReleaseStage], []).
 
 notify(Type, Reason, Message, Module, Line) ->
-  notify(Type, Reason, Message, Module, Line, undefined, undefined).
+  notify(Type, Reason, Message, Module, Line, generate_trace(), undefined).
 notify(Type, Reason, Message, Module, Line, Trace, Request) ->
   gen_server:cast(?MODULE, {exception, Type, Reason, Message, Module, Line, Trace, Request}).
 
@@ -65,10 +65,11 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 % Internal API
+% See https://bugsnag.com/docs/notifier-api
 send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) ->
   {ok, Hostname} = inet:gethostname(),
   Payload = [
-    {apiKey, list_to_binary(State#state.api_key)},
+    {apiKey, to_bin(State#state.api_key)},
     {notifier, [
         {name, ?NOTIFIER_NAME},
         {version, ?NOTIFIER_VERSION},
@@ -76,13 +77,17 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
       ]},
     {events, [
         [
-          {payloadVersion, "2"},
-          {context, list_to_binary(Hostname)},
-          {releaseStage, list_to_binary(State#state.release_stage)},
+          {payloadVersion, <<"2">>},
+          {device, [
+              {hostname, to_bin(Hostname)}
+          ]},
+          {app, [
+              {releaseStage, to_bin(State#state.release_stage)}
+          ]},
           {exceptions, [
               [
-                {errorClass, list_to_binary(io_lib:format("~p", [Reason]))},
-                {message, list_to_binary(io_lib:format("~p", [Message]))},
+                {errorClass, to_bin(Reason)},
+                {message, to_bin(Message)},
                 {stacktrace, process_trace(Trace)}
               ]
             ]}
@@ -91,8 +96,6 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
   ],
   deliver_payload(jsx:encode(Payload)).
 
-
-process_trace(undefined) -> [];
 process_trace(Trace) ->
   lager:info("Processing trace ~p", [Trace]),
   process_trace(Trace, []).
@@ -102,20 +105,19 @@ process_trace([Current|Rest], ProcessedTrace) ->
   StackTraceLine = case Current of
     {_, F, _, [{file, File}, {line, Line}]} ->
       [
-        {file, list_to_binary(File)},
+        {file, to_bin(File)},
         {lineNumber, Line},
-        {method, list_to_binary(io_lib:format("~p", [F]))}
+        {method, to_bin(F)}
       ];
     {_, F, _} ->
       [
-        {method, list_to_binary(io_lib:format("~p", [F]))}
+        {method, to_bin(F)}
       ];
     _ ->
-      lager:error("Discarding stack trace line: ~p", [Current]),
+      lager:warning("Discarding stack trace line: ~p", [Current]),
       []
   end,
   process_trace(Rest, ProcessedTrace ++ [StackTraceLine]).
-
 
 deliver_payload(Payload) ->
   lager:info("Sending exception: ~p", [Payload]),
@@ -123,7 +125,23 @@ deliver_payload(Payload) ->
     {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} ->
       lager:info("Error sent. Response: ~p", [Body]);
     {_, {{_Version, Status, ReasonPhrase}, _Headers, _Body}} ->
-      lager:error("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase])
+      lager:warning("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase])
   end,
 
   ok.
+
+to_bin(Atom) when erlang:is_atom(Atom) ->
+    erlang:atom_to_binary(Atom, utf8);
+to_bin(Bin) when erlang:is_binary(Bin) ->
+    Bin;
+to_bin(Int) when erlang:is_integer(Int) ->
+    erlang:integer_to_binary(Int);
+to_bin(List) when erlang:is_list(List) ->
+    erlang:iolist_to_binary(List).
+
+generate_trace() ->
+  lager:info("Generating trace"),
+  try
+    throw(bugsnag_gen_trace)
+  catch bugsnag_gen_trace -> erlang:get_stacktrace()
+  end.
