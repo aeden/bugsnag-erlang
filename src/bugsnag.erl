@@ -125,7 +125,9 @@ deliver_payload(Payload) ->
     {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} ->
       lager:info("Error sent. Response: ~p", [Body]);
     {_, {{_Version, Status, ReasonPhrase}, _Headers, _Body}} ->
-      lager:warning("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase])
+      lager:warning("Failed to send error to bugsnag (~p : ~p)", [Status, ReasonPhrase]);
+    {error, socket_closed_remotely} ->
+      lager:warning("Failed to send error to bugsnag, socket closed remotely")
   end,
 
   ok.
