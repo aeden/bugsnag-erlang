@@ -23,11 +23,7 @@
 
 % Public API
 start() ->
-  inets:start(),
-  crypto:start(),
-  ssl:start(),
-  lager:start(),
-  application:start(bugsnag).
+  application:ensure_all_started(bugsnag).
 
 start_link(ApiKey, ReleaseStage) ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [ApiKey, ReleaseStage], []).

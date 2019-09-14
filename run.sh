@@ -1,3 +1,3 @@
 #!/bin/sh
 
-erl -config sys.config -pa ebin deps/**/ebin -s bugsnag
+erl -config sys.config -pa ebin _build/default/lib/**/ebin -s bugsnag

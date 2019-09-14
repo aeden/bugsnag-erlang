@@ -1,5 +1,6 @@
+_build
+rebar3
 deps
 *.dump
-ebin
 log
 sys.config
