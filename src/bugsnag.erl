@@ -18,7 +18,7 @@
 -define(NOTIFY_ENDPOINT, "https://notify.bugsnag.com").
 
 -define(NOTIFIER_NAME, <<"Bugsnag Erlang">>).
--define(NOTIFIER_VERSION, <<"1.0.0">>).
+-define(NOTIFIER_VERSION, <<"1.1.0">>).
 -define(NOTIFIER_URL, <<"https://github.com/aeden/bugsnag-erlang">>).
 
 % Public API
@@ -70,6 +70,7 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
   {ok, Hostname} = inet:gethostname(),
   Payload = [
     {apiKey, to_bin(State#state.api_key)},
+    {payloadVersion, <<"5">>},
     {notifier, [
         {name, ?NOTIFIER_NAME},
         {version, ?NOTIFIER_VERSION},
@@ -77,7 +78,6 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
       ]},
     {events, [
         [
-          {payloadVersion, <<"2">>},
           {device, [
               {hostname, to_bin(Hostname)}
           ]},
