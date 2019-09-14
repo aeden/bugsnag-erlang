@@ -143,5 +143,6 @@ generate_trace() ->
   lager:info("Generating trace"),
   try
     throw(bugsnag_gen_trace)
-  catch bugsnag_gen_trace -> erlang:get_stacktrace()
+  catch _:_:StackTrace ->
+          StackTrace
   end.
