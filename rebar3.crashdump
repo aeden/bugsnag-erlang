@@ -1,0 +1,36 @@
+Error: {case_clause,{ok,{403,
+                         #{<<"alt-svc">> => <<"clear">>,
+                           <<"cache-control">> =>
+                               <<"max-age=0, private, must-revalidate">>,
+                           <<"content-length">> => <<"77">>,
+                           <<"content-type">> =>
+                               <<"application/vnd.hex+erlang; charset=utf-8">>,
+                           <<"date">> => <<"Mon, 16 Sep 2019 18:38:05 GMT">>,
+                           <<"server">> => <<"Cowboy">>,
+                           <<"strict-transport-security">> =>
+                               <<"max-age=31536000">>,
+                           <<"vary">> => <<"accept-encoding">>,
+                           <<"via">> => <<"1.1 google">>,
+                           <<"x-ratelimit-limit">> => <<"500">>,
+                           <<"x-ratelimit-remaining">> => <<"499">>,
+                           <<"x-ratelimit-reset">> => <<"1568659140">>,
+                           <<"x-request-id">> => <<"FcT_IJUGSN8QZY0AGGwC">>},
+                         #{<<"message">> =>
+                               <<"account not authorized for this action">>,
+                           <<"status">> => 403}}}}
+[{rebar3_hex_publish,create_and_publish,3,
+                     [{file,"/Users/anthonyeden/.cache/rebar3/plugins/rebar3_hex/src/rebar3_hex_publish.erl"},
+                      {line,214}]},
+ {rebar3_hex_publish,publish,8,
+                     [{file,"/Users/anthonyeden/.cache/rebar3/plugins/rebar3_hex/src/rebar3_hex_publish.erl"},
+                      {line,187}]},
+ {lists,foldl,3,[{file,"lists.erl"},{line,1263}]},
+ {rebar_core,do,2,
+             [{file,"/tmp/cirrus-ci-build/src/rebar_core.erl"},{line,154}]},
+ {rebar_prv_do,do_task,5,
+               [{file,"/tmp/cirrus-ci-build/src/rebar_prv_do.erl"},{line,87}]},
+ {rebar_core,do,2,
+             [{file,"/tmp/cirrus-ci-build/src/rebar_core.erl"},{line,154}]},
+ {rebar3,run_aux,2,[{file,"/tmp/cirrus-ci-build/src/rebar3.erl"},{line,182}]},
+ {rebar3,main,1,[{file,"/tmp/cirrus-ci-build/src/rebar3.erl"},{line,66}]}]
+

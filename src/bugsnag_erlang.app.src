@@ -1,4 +1,4 @@
-{application, bugsnag,
+{application, bugsnag_erlang,
  [{description, "Bugsnag notifier"},
   {licenses, ["MIT"]},
   {vsn, "1.0.0"},
