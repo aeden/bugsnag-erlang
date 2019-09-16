@@ -1,5 +1,6 @@
 {application, bugsnag,
  [{description, "Bugsnag notifier"},
+  {license, "MIT"},
   {vsn, git},
   {mod, { bugsnag_app, []}},
   {applications, [kernel, stdlib, inets, crypto, ssl, lager]}
