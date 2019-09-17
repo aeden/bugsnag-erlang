@@ -32,7 +32,7 @@ When embedding, make sure to set up the configuration elements in your sys.confi
 
 ```erlang
 [
-  {bugsnag, [
+  {bugsnag_erlang, [
     {error_logger, true},
     {api_key, "ENTER_API_KEY"},
     {release_state, "development"}

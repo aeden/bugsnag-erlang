@@ -5,7 +5,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _Args) ->
-  case application:get_env(bugsnag, enabled, true) of
+  case application:get_env(bugsnag_erlang, enabled, true) of
     true ->
       start();
     false ->
@@ -17,14 +17,14 @@ start(_Type, _Args) ->
 
 start() ->
   lager:info("Starting bugsnag notifier"),
-  ReleaseState = case application:get_env(bugsnag, release_state) of
+  ReleaseState = case application:get_env(bugsnag_erlang, release_state) of
     {ok, Value} -> Value;
     undefined -> undefined
   end,
-  case application:get_env(bugsnag, api_key) of
+  case application:get_env(bugsnag_erlang, api_key) of
     {ok, "ENTER_API_KEY"} -> {error, no_api_key};
     {ok, ApiKey} ->
-      case application:get_env(bugsnag, error_logger) of
+      case application:get_env(bugsnag_erlang, error_logger) of
         {ok, true} ->
           error_logger:add_report_handler(bugsnag_error_logger);
         _ -> ok
