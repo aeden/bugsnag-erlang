@@ -63,7 +63,6 @@ code_change(_OldVsn, State, _Extra) ->
 % Internal API
 % See https://bugsnag.com/docs/notifier-api
 send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) ->
-  {ok, Hostname} = inet:gethostname(),
   Payload = [
     {apiKey, to_bin(State#state.api_key)},
     {payloadVersion, <<"5">>},
@@ -75,7 +74,7 @@ send_exception(_Type, Reason, Message, _Module, _Line, Trace, _Request, State) -
     {events, [
         [
           {device, [
-              {hostname, to_bin(Hostname)}
+              {hostname, to_bin(net_adm:localhost())}
           ]},
           {app, [
               {releaseStage, to_bin(State#state.release_stage)}
