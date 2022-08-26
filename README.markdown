@@ -1,6 +1,8 @@
 Bugsnag notifier for Erlang applications.
 
 ## Dependencies
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Faeden%2Fbugsnag-erlang.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Faeden%2Fbugsnag-erlang?ref=badge_shield)
+
 
 Requires Lager.
 
@@ -62,3 +64,7 @@ to your lager handler config.
 ## Thanks
 
 Thank you to Ken Pratt: his library https://github.com/kenpratt/erlbrake provided a lot of code for this library.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Faeden%2Fbugsnag-erlang.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Faeden%2Fbugsnag-erlang?ref=badge_large)
